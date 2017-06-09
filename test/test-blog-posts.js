@@ -155,6 +155,16 @@ describe('blog posts API resource', function() {
 
   describe('POST endpoint', function() {
 
+    it('should return unauthorized on wrong info', function() {
+      return chai.request(app)
+        .post('/posts')
+        .auth('wrong', 'wrong')
+        .send({'username': 'test'})
+        .catch(err => {
+          err.status.should.be.equal(401);
+        });
+    });
+
     it('should add a new user', function() {
       const newUser = {
         username: faker.internet.userName(),
@@ -228,6 +238,16 @@ describe('blog posts API resource', function() {
 
   describe('PUT endpoint', function() {
 
+    it('should return unauthorized on wrong info', function() {
+      return chai.request(app)
+        .put('/posts/124325235')
+        .auth('wrong', 'wrong')
+        .send({'username': 'test'})
+        .catch(err => {
+          err.status.should.be.equal(401);
+        });
+    });
+
     // strategy:
     //  1. Get an existing post from db
     //  2. Make a PUT request to update that post
@@ -275,6 +295,16 @@ describe('blog posts API resource', function() {
   });
 
   describe('DELETE endpoint', function() {
+
+    it('should return unauthorized on wrong info', function() {
+      return chai.request(app)
+        .delete('/posts/4736274748')
+        .auth('wrong', 'wrong')
+        .catch(err => {
+          console.log();
+          err.status.should.be.equal(401);
+        });
+    });
     // strategy:
     //  1. get a post
     //  2. make a DELETE request for that post's id
