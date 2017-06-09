@@ -1,3 +1,5 @@
+'use strict';
+
 const chai = require('chai');
 const chaiHttp = require('chai-http');
 const faker = require('faker');
@@ -152,6 +154,40 @@ describe('blog posts API resource', function() {
   });
 
   describe('POST endpoint', function() {
+
+    it('should add a new user', function() {
+      const newUser = {
+        username: faker.internet.userName(),
+        password: 'test-password',
+        firstName: faker.name.firstName(),
+        lastName: faker.name.lastName()
+      };
+
+      return chai.request(app)
+         .post('/users')
+         .auth(testUser.username, 'test-password')
+         .send(newUser)
+         .then(function(res) {
+           res.should.have.status(201);
+          //  console.log('this is the once we want', res.body);
+           res.should.be.json;
+           res.body.should.be.a('object');
+          //  res.body.id.should.not.be.null;
+           res.body.should.include.keys('username', 'firstName', 'lastName');
+           res.body.username.should.equal(newUser.username);
+           res.body.firstName.should.equal(newUser.firstName);
+           res.body.lastName.should.equal(newUser.lastName);
+           let username = res.body.username.trim();
+           return User.find({username}).exec();
+         })
+         .then(user => {
+           console.log(user);
+           user[0].username.should.equal(newUser.username);
+           user[0].firstName.should.equal(newUser.firstName);
+           user[0].lastName.should.equal(newUser.lastName);
+         });
+
+    });
     // strategy: make a POST request with data,
     // then prove that the post we get back has
     // right keys, and that `id` is there (which means

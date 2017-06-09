@@ -1,3 +1,5 @@
+'use strict';
+
 const bodyParser = require('body-parser');
 const express = require('express');
 const mongoose = require('mongoose');
@@ -44,7 +46,7 @@ app.post('/users', (req, res) => {
   const requiredFields = ['username', 'password', 'firstName', 'lastName'];
 
   const missingIndex = requiredFields.findIndex(field => !req.body[field]);
-  if (missingIndex != -1) {
+  if (missingIndex !== -1) {
     return res.status(400).json({
       message: `Missing field: ${requiredFields[missingIndex]}`
     });

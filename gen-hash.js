@@ -1,3 +1,4 @@
+'use strict';
 // You can just run this in the Node REPL
 const {User} = require('./models');
 
