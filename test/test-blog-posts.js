@@ -8,9 +8,11 @@ const mongoose = require('mongoose');
 const should = chai.should();
 
 const {DATABASE_URL} = require('../config');
-const {BlogPost} = require('../models');
+const {BlogPost, User} = require('../models');
 const {closeServer, runServer, app} = require('../server');
 const {TEST_DATABASE_URL} = require('../config');
+
+let testUser;
 
 chai.use(chaiHttp);
 
@@ -23,7 +25,7 @@ function tearDownDb() {
     console.warn('Deleting database');
     mongoose.connection.dropDatabase()
       .then(result => resolve(result))
-      .catch(err => reject(err))
+      .catch(err => reject(err));
   });
 }
 
@@ -50,6 +52,21 @@ function seedBlogPostData() {
   return BlogPost.insertMany(seedData);
 }
 
+function seedUserData() {
+
+  console.log('seeding user data');
+  // User.hashPassword('test-password')
+  //   .then(hash => {
+  testUser = {
+    username: faker.internet.userName(),
+    password: '$2a$10$4W/.zCc1XG/X2ZEYYd.JeORx5J1JmLq/OnrJDGziP/Vxow57p93hq',
+    firstName: faker.name.firstName(),
+    lastName: faker.name.lastName()
+  };
+  return User.create(testUser);
+    // });
+}
+
 
 describe('blog posts API resource', function() {
 
@@ -58,8 +75,12 @@ describe('blog posts API resource', function() {
   });
 
   beforeEach(function() {
-    return seedBlogPostData();
+    return Promise.all([seedBlogPostData(), seedUserData()]);
   });
+
+  // beforeEach(function() {
+  //   return seedUserData();
+  // });
 
   afterEach(function() {
     // tear down database so we ensure no state from this test
@@ -138,16 +159,13 @@ describe('blog posts API resource', function() {
     it('should add a new blog post', function() {
 
       const newPost = {
-          title: faker.lorem.sentence(),
-          author: {
-            firstName: faker.name.firstName(),
-            lastName: faker.name.lastName(),
-          },
-          content: faker.lorem.text()
+        title: faker.lorem.sentence(),
+        content: faker.lorem.text()
       };
 
       return chai.request(app)
         .post('/posts')
+        .auth(testUser.username, 'test-password')
         .send(newPost)
         .then(function(res) {
           res.should.have.status(201);
@@ -159,15 +177,15 @@ describe('blog posts API resource', function() {
           // cause Mongo should have created id on insertion
           res.body.id.should.not.be.null;
           res.body.author.should.equal(
-            `${newPost.author.firstName} ${newPost.author.lastName}`);
+            `${testUser.firstName} ${testUser.lastName}`);
           res.body.content.should.equal(newPost.content);
           return BlogPost.findById(res.body.id).exec();
         })
         .then(function(post) {
           post.title.should.equal(newPost.title);
           post.content.should.equal(newPost.content);
-          post.author.firstName.should.equal(newPost.author.firstName);
-          post.author.lastName.should.equal(newPost.author.lastName);
+          post.author.firstName.should.equal(testUser.firstName);
+          post.author.lastName.should.equal(testUser.lastName);
         });
     });
   });
@@ -197,6 +215,7 @@ describe('blog posts API resource', function() {
 
           return chai.request(app)
             .put(`/posts/${post.id}`)
+            .auth(testUser.username, 'test-password')
             .send(updateData);
         })
         .then(res => {
@@ -234,7 +253,8 @@ describe('blog posts API resource', function() {
         .exec()
         .then(_post => {
           post = _post;
-          return chai.request(app).delete(`/posts/${post.id}`);
+          return chai.request(app).delete(`/posts/${post.id}`)
+            .auth(testUser.username, 'test-password');
         })
         .then(res => {
           res.should.have.status(204);

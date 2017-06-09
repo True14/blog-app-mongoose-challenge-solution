@@ -32,7 +32,7 @@ const strategy = new BasicStrategy(function(username, password, callback) {
         return callback(null, false, {message: 'Incorrect password'});
       }
       else {
-        return callback(null, user)
+        return callback(null, user);
       }
     });
 });
@@ -65,7 +65,7 @@ app.post('/users', (req, res) => {
         return res.status(422).json({message: 'username already taken'});
       }
       // if no existing user, hash password
-      return User.hashPassword(password)
+      return User.hashPassword(password);
     })
     .then(hash => {
       return User
@@ -74,13 +74,13 @@ app.post('/users', (req, res) => {
           password: hash,
           firstName,
           lastName
-        })
+        });
     })
     .then(user => {
       return res.status(201).json(user.apiRepr());
     })
     .catch(err => {
-      res.status(500).json({message: 'Internal server error'})
+      res.status(500).json({message: 'Internal server error'});
     });
 });
 
@@ -111,14 +111,14 @@ app.get('/posts/:id', (req, res) => {
 app.post('/posts',
   passport.authenticate('basic', {session: false}),
   (req, res) => {
-  const requiredFields = ['title', 'content'];
-  requiredFields.forEach(field => {
-    if (!(field in req.body)) {
-      res.status(400).json(
+    const requiredFields = ['title', 'content'];
+    requiredFields.forEach(field => {
+      if (!(field in req.body)) {
+        res.status(400).json(
         {error: `Missing "${field}" in request body`});
-    }});
+      }});
 
-  BlogPost
+    BlogPost
     .create({
       title: req.body.title,
       content: req.body.content,
@@ -129,16 +129,16 @@ app.post('/posts',
     })
     .then(blogPost => res.status(201).json(blogPost.apiRepr()))
     .catch(err => {
-        console.error(err);
-        res.status(500).json({error: 'Something went wrong'});
+      console.error(err);
+      res.status(500).json({error: 'Something went wrong'});
     });
-});
+  });
 
 
 app.delete('/posts/:id',
   passport.authenticate('basic', {session: false}),
   (req, res) => {
-  BlogPost
+    BlogPost
     .findByIdAndRemove(req.params.id)
     .exec()
     .then(() => {
@@ -148,32 +148,32 @@ app.delete('/posts/:id',
       console.error(err);
       res.status(500).json({error: 'something went terribly wrong'});
     });
-});
+  });
 
 
 app.put('/posts/:id',
   passport.authenticate('basic', {session: false}),
   (req, res) => {
-  if (!(req.params.id && req.body.id && req.params.id === req.body.id)) {
-    res.status(400).json({
-      error: 'Request path id and request body id values must match'
-    });
-  }
-
-  const updated = {};
-  const updateableFields = ['title', 'content'];
-  updateableFields.forEach(field => {
-    if (field in req.body) {
-      updated[field] = req.body[field];
+    if (!(req.params.id && req.body.id && req.params.id === req.body.id)) {
+      res.status(400).json({
+        error: 'Request path id and request body id values must match'
+      });
     }
-  });
 
-  BlogPost
+    const updated = {};
+    const updateableFields = ['title', 'content', 'author'];
+    updateableFields.forEach(field => {
+      if (field in req.body) {
+        updated[field] = req.body[field];
+      }
+    });
+
+    BlogPost
     .findByIdAndUpdate(req.params.id, {$set: updated}, {new: true})
     .exec()
     .then(updatedPost => res.status(201).json(updatedPost.apiRepr()))
     .catch(err => res.status(500).json({message: 'Something went wrong'}));
-});
+  });
 
 
 app.use('*', function(req, res) {
@@ -208,15 +208,15 @@ function runServer(databaseUrl=DATABASE_URL, port=PORT) {
 // use it in our integration tests later.
 function closeServer() {
   return mongoose.disconnect().then(() => {
-     return new Promise((resolve, reject) => {
-       console.log('Closing server');
-       server.close(err => {
-           if (err) {
-               return reject(err);
-           }
-           resolve();
-       });
-     });
+    return new Promise((resolve, reject) => {
+      console.log('Closing server');
+      server.close(err => {
+        if (err) {
+          return reject(err);
+        }
+        resolve();
+      });
+    });
   });
 }
 
@@ -224,6 +224,6 @@ function closeServer() {
 // runs. but we also export the runServer command so other code (for instance, test code) can start the server as needed.
 if (require.main === module) {
   runServer().catch(err => console.error(err));
-};
+}
 
 module.exports = {runServer, app, closeServer};
